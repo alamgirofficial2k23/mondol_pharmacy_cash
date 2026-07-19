@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<title>মন্ডল ফার্মেসী - মালিকের ড্যাশবোর্ড</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;700&display=swap" rel="stylesheet">
+<style>body{font-family:'Noto Sans Bengali', sans-serif;}</style>
+</head>
+<body class="bg-gray-50 min-h-screen p-4 md:p-8">
+  <div class="max-w-4xl mx-auto">
+
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-emerald-700">মন্ডল ফার্মেসী</h1>
+        <p class="text-gray-500 text-sm">মালিকের ড্যাশবোর্ড (ভিউ-অনলি — শুধু দেখা যাবে, এডিট করা যাবে না)</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2 mb-6">
+      <button id="tab-daily" onclick="switchTab('daily')" class="tab-btn bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium">📅 দৈনিক হিসাব</button>
+      <button id="tab-baki" onclick="switchTab('baki')" class="tab-btn bg-white text-gray-600 border px-4 py-2 rounded-lg text-sm font-medium">👤 বাকীর তালিকা</button>
+    </div>
+
+    <!-- ===================== দৈনিক হিসাব ট্যাব ===================== -->
+    <div id="panel-daily">
+      <!-- Date navigation -->
+      <div class="bg-white rounded-xl shadow-sm p-4 mb-6 flex items-center justify-between gap-3 flex-wrap">
+        <button onclick="changeDay(-1)" class="border rounded-lg px-3 py-2 text-sm hover:bg-gray-50">← আগের দিন</button>
+        <input type="date" id="date-picker" onchange="loadDay(this.value)" class="border rounded-lg px-3 py-2 text-sm">
+        <button onclick="changeDay(1)" id="next-day-btn" class="border rounded-lg px-3 py-2 text-sm hover:bg-gray-50">পরের দিন →</button>
+      </div>
+
+      <div id="daily-loading" class="text-center text-gray-400 py-16">লোড হচ্ছে...</div>
+      <div id="daily-error" class="hidden bg-red-100 text-red-700 rounded-lg px-4 py-3 mb-4"></div>
+
+      <div id="daily-content" class="hidden">
+        <div id="closed-badge" class="hidden bg-red-100 text-red-700 text-xs font-medium px-3 py-1.5 rounded-full inline-block mb-4">🔒 এই দিনের হিসাব ক্লোজড</div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+            <div class="text-xs text-gray-500 mb-1">ওপেনিং ক্যাশ</div>
+            <div class="text-lg font-bold text-gray-800" id="v-opening">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-emerald-500">
+            <div class="text-xs text-gray-500 mb-1">সেল</div>
+            <div class="text-lg font-bold text-gray-800" id="v-sale">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-orange-500">
+            <div class="text-xs text-gray-500 mb-1">ঔষধ কেনা</div>
+            <div class="text-lg font-bold text-gray-800" id="v-purchase">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-purple-500">
+            <div class="text-xs text-gray-500 mb-1">বাকী</div>
+            <div class="text-lg font-bold text-gray-800" id="v-baki">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-teal-500">
+            <div class="text-xs text-gray-500 mb-1">বাকী পেইড</div>
+            <div class="text-lg font-bold text-gray-800" id="v-bakipaid">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500">
+            <div class="text-xs text-gray-500 mb-1">খরচ</div>
+            <div class="text-lg font-bold text-gray-800" id="v-expense">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-rose-500">
+            <div class="text-xs text-gray-500 mb-1">ক্যাশ উত্তোলন</div>
+            <div class="text-lg font-bold text-gray-800" id="v-withdrawal">—</div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-cyan-500">
+            <div class="text-xs text-gray-500 mb-1">বাড়তি ক্যাশ</div>
+            <div class="text-lg font-bold text-gray-800" id="v-extra">—</div>
+          </div>
+        </div>
+
+        <div class="bg-emerald-700 text-white rounded-xl shadow-md p-6 flex items-center justify-between mb-4">
+          <div>
+            <div class="text-sm opacity-80">মোট ক্যাশ (সিস্টেম হিসাব)</div>
+            <div class="text-3xl font-bold" id="v-total">—</div>
+          </div>
+          <div class="text-5xl opacity-30">৳</div>
+        </div>
+
+        <div id="cash-count-box" class="hidden bg-white rounded-xl shadow-sm p-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div><div class="text-gray-500 mb-1">সিস্টেম ক্যাশ</div><div class="font-bold" id="v-count-system">—</div></div>
+            <div><div class="text-gray-500 mb-1">হাতে গোনা ক্যাশ</div><div class="font-bold" id="v-count-counted">—</div></div>
+            <div><div class="text-gray-500 mb-1">পার্থক্য</div><div class="font-bold" id="v-count-diff">—</div></div>
+          </div>
+        </div>
+
+        <!-- Detail sections -->
+        <div class="space-y-6">
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm">🧾 সেলস বিস্তারিত</h3>
+            <div id="list-sales" class="text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm">💊 ঔষধ কেনা বিস্তারিত</h3>
+            <div id="list-purchases" class="text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm">💸 খরচ বিস্তারিত</h3>
+            <div id="list-expenses" class="text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm">👤 বাকী / বাকী পেইড বিস্তারিত</h3>
+            <div id="list-ledger" class="text-sm"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm p-5">
+            <h3 class="font-bold text-gray-700 mb-3 text-sm">🏦 মালিকের লেনদেন বিস্তারিত</h3>
+            <div id="list-owner" class="text-sm"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== বাকীর তালিকা ট্যাব ===================== -->
+    <div id="panel-baki" class="hidden">
+      <div id="baki-loading" class="text-center text-gray-400 py-16">লোড হচ্ছে...</div>
+      <div id="baki-error" class="hidden bg-red-100 text-red-700 rounded-lg px-4 py-3 mb-4"></div>
+      <div id="baki-content" class="hidden">
+        <div class="bg-purple-700 text-white rounded-xl shadow-md p-6 flex items-center justify-between mb-6">
+          <div>
+            <div class="text-sm opacity-80">মোট বকেয়া বাকী</div>
+            <div class="text-3xl font-bold" id="v-total-baki">—</div>
+          </div>
+          <div class="text-5xl opacity-30">👤</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-5">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500 border-b">
+                <th class="py-2">নাম</th>
+                <th class="py-2">ফোন</th>
+                <th class="py-2 text-right">বকেয়া বাকী</th>
+              </tr>
+            </thead>
+            <tbody id="baki-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-6">
+      <button onclick="refreshAll()" class="text-sm text-emerald-700 border border-emerald-300 rounded-lg px-4 py-2 hover:bg-emerald-50">
+        🔄 রিফ্রেশ করুন
+      </button>
+    </div>
+  </div>
+
+<script>
+// ============================================
+// এই দুটো ভ্যালু আপনার হোস্টিং অনুযায়ী পরিবর্তন করুন
+// ============================================
+const API_BASE = "https://cash.shohozvibe.com/api";
+const API_KEY = "d9a4f7c1e8b2a6f3c0d5e9a1b7f4c8d2e6a9c3f1b5d7e0a4c8f2b6d1e9a3c7f5b8d0e2a6c1f9b4d7e3a8c5f0b2d6e1";
+
+let currentDate = new Date().toISOString().slice(0, 10);
+const todayStr = currentDate;
+
+function fmt(n) {
+  if (n === null || n === undefined) return "—";
+  return "৳" + Number(n).toLocaleString("en-BD", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function switchTab(tab) {
+  document.getElementById('panel-daily').classList.toggle('hidden', tab !== 'daily');
+  document.getElementById('panel-baki').classList.toggle('hidden', tab !== 'baki');
+  document.getElementById('tab-daily').className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium ' + (tab === 'daily' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border');
+  document.getElementById('tab-baki').className = 'tab-btn px-4 py-2 rounded-lg text-sm font-medium ' + (tab === 'baki' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-600 border');
+  if (tab === 'baki') loadBaki();
+}
+
+function changeDay(delta) {
+  const d = new Date(currentDate);
+  d.setDate(d.getDate() + delta);
+  const newDate = d.toISOString().slice(0, 10);
+  if (newDate > todayStr) return; // ভবিষ্যতের তারিখে যাওয়া যাবে না
+  loadDay(newDate);
+}
+
+function renderTable(containerId, rows, columns) {
+  const el = document.getElementById(containerId);
+  if (!rows || rows.length === 0) {
+    el.innerHTML = '<p class="text-gray-400 text-center py-4">কোনো ডেটা নেই।</p>';
+    return;
+  }
+  let html = '<table class="w-full text-sm"><thead><tr class="text-left text-gray-500 border-b">';
+  columns.forEach(c => html += `<th class="py-2 ${c.right ? 'text-right' : ''}">${c.label}</th>`);
+  html += '</tr></thead><tbody>';
+  rows.forEach(row => {
+    html += '<tr class="border-b last:border-0">';
+    columns.forEach(c => {
+      const val = c.render ? c.render(row) : (row[c.key] ?? '—');
+      html += `<td class="py-2 ${c.right ? 'text-right font-medium' : 'text-gray-600'}">${val}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+async function loadDay(date) {
+  currentDate = date;
+  document.getElementById('date-picker').value = date;
+  document.getElementById('next-day-btn').disabled = (date >= todayStr);
+  document.getElementById('next-day-btn').classList.toggle('opacity-40', date >= todayStr);
+
+  const loading = document.getElementById('daily-loading');
+  const content = document.getElementById('daily-content');
+  const errorBox = document.getElementById('daily-error');
+  loading.classList.remove('hidden');
+  content.classList.add('hidden');
+  errorBox.classList.add('hidden');
+
+  try {
+    const res = await fetch(`${API_BASE}/day_detail.php?date=${date}`, { headers: { "X-API-KEY": API_KEY } });
+    if (!res.ok) throw new Error("সার্ভার থেকে ডেটা আনতে ব্যর্থ (status " + res.status + ")");
+    const data = await res.json();
+    const s = data.summary;
+
+    document.getElementById("v-opening").textContent = fmt(s.opening_cash);
+    document.getElementById("v-sale").textContent = fmt(s.sale);
+    document.getElementById("v-purchase").textContent = fmt(s.purchase);
+    document.getElementById("v-baki").textContent = fmt(s.baki);
+    document.getElementById("v-bakipaid").textContent = fmt(s.baki_paid);
+    document.getElementById("v-expense").textContent = fmt(s.expense);
+    document.getElementById("v-withdrawal").textContent = fmt(s.withdrawal);
+    document.getElementById("v-extra").textContent = fmt(s.extra_cash);
+    document.getElementById("v-total").textContent = fmt(s.total_cash);
+    document.getElementById("closed-badge").classList.toggle("hidden", !s.is_closed);
+
+    const countBox = document.getElementById('cash-count-box');
+    if (s.is_closed && s.counted_cash !== null) {
+      countBox.classList.remove('hidden');
+      document.getElementById('v-count-system').textContent = fmt(s.total_cash);
+      document.getElementById('v-count-counted').textContent = fmt(s.counted_cash);
+      const diff = s.cash_difference;
+      const diffEl = document.getElementById('v-count-diff');
+      if (diff === 0) { diffEl.textContent = '৳0.00 (মিলেছে)'; diffEl.className = 'font-bold text-emerald-600'; }
+      else if (diff > 0) { diffEl.textContent = '+' + fmt(diff) + ' (Over)'; diffEl.className = 'font-bold text-blue-600'; }
+      else { diffEl.textContent = '−' + fmt(Math.abs(diff)) + ' (Short)'; diffEl.className = 'font-bold text-red-600'; }
+    } else {
+      countBox.classList.add('hidden');
+    }
+
+    renderTable('list-sales', data.sales, [
+      { label: 'ইনভয়েস', key: 'invoice_no' },
+      { label: 'বিস্তারিত', key: 'details', render: r => r.details || '—' },
+      { label: 'টাকা', right: true, render: r => fmt(r.amount) },
+    ]);
+
+    renderTable('list-purchases', data.purchases, [
+      { label: 'সোর্স', key: 'source_name' },
+      { label: 'ধরন', render: r => r.source_type === 'company' ? 'কোম্পানি' : 'লোকাল' },
+      { label: 'নোট', render: r => r.notes || '—' },
+      { label: 'টাকা', right: true, render: r => fmt(r.amount) },
+    ]);
+
+    renderTable('list-expenses', data.expenses, [
+      { label: 'খাত', key: 'category' },
+      { label: 'নোট', render: r => r.note || '—' },
+      { label: 'টাকা', right: true, render: r => fmt(r.amount) },
+    ]);
+
+    renderTable('list-ledger', data.customer_ledger, [
+      { label: 'কাস্টমার', key: 'customer_name' },
+      { label: 'ধরন', render: r => r.entry_type === 'baki' ? '<span class="text-purple-600">নতুন বাকী</span>' : '<span class="text-teal-600">বাকী পেইড</span>' },
+      { label: 'নোট', render: r => r.note || '—' },
+      { label: 'টাকা', right: true, render: r => fmt(r.amount) },
+    ]);
+
+    renderTable('list-owner', data.owner_transactions, [
+      { label: 'ধরন', render: r => r.txn_type === 'withdrawal' ? 'ক্যাশ উত্তোলন' : 'বাড়তি ক্যাশ' },
+      { label: 'নোট', render: r => r.note || '—' },
+      { label: 'টাকা', right: true, render: r => fmt(r.amount) },
+    ]);
+
+    loading.classList.add('hidden');
+    content.classList.remove('hidden');
+  } catch (err) {
+    loading.classList.add('hidden');
+    errorBox.textContent = "ত্রুটি: " + err.message;
+    errorBox.classList.remove('hidden');
+  }
+}
+
+async function loadBaki() {
+  const loading = document.getElementById('baki-loading');
+  const content = document.getElementById('baki-content');
+  const errorBox = document.getElementById('baki-error');
+  loading.classList.remove('hidden');
+  content.classList.add('hidden');
+  errorBox.classList.add('hidden');
+
+  try {
+    const res = await fetch(`${API_BASE}/baki_list.php`, { headers: { "X-API-KEY": API_KEY } });
+    if (!res.ok) throw new Error("সার্ভার থেকে ডেটা আনতে ব্যর্থ (status " + res.status + ")");
+    const data = await res.json();
+
+    document.getElementById('v-total-baki').textContent = fmt(data.total_outstanding);
+    const body = document.getElementById('baki-table-body');
+    if (!data.customers || data.customers.length === 0) {
+      body.innerHTML = '<tr><td colspan="3" class="py-4 text-center text-gray-400">কোনো বকেয়া বাকী নেই।</td></tr>';
+    } else {
+      body.innerHTML = data.customers.map(c => `
+        <tr class="border-b last:border-0">
+          <td class="py-2 font-medium">${c.name}</td>
+          <td class="py-2 text-gray-600">${c.phone || '—'}</td>
+          <td class="py-2 text-right font-bold text-purple-700">${fmt(c.balance)}</td>
+        </tr>
+      `).join('');
+    }
+
+    loading.classList.add('hidden');
+    content.classList.remove('hidden');
+  } catch (err) {
+    loading.classList.add('hidden');
+    errorBox.textContent = "ত্রুটি: " + err.message;
+    errorBox.classList.remove('hidden');
+  }
+}
+
+function refreshAll() {
+  loadDay(currentDate);
+  if (!document.getElementById('panel-baki').classList.contains('hidden')) loadBaki();
+}
+
+loadDay(todayStr);
+setInterval(refreshAll, 10000); // প্রতি 1 সেকেন্ডে অটো-রিফ্রেশ
+</script>
+</body>
+</html>
